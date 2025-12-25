@@ -5,6 +5,67 @@
 #include <sys/wait.h>
 
 /**
+ * display_prompt - Affiche le prompt du shell
+ *
+ * Return: void
+ */
+void display_prompt(void)
+{
+	printf("$ ");
+	fflush(stdout);
+}
+
+/**
+ * remove_newline - Enlève le caractère newline d'une chaîne
+ * @line: La chaîne à modifier
+ * @length: La longueur de la chaîne
+ *
+ * Return: void
+ */
+void remove_newline(char *line, ssize_t length)
+{
+	if (line[length - 1] == '\n')
+		line[length - 1] = '\0';
+}
+
+/**
+ * execute_command - Exécute une commande
+ * @command: La commande à exécuter
+ *
+ * Return: void
+ */
+void execute_command(char *command)
+{
+	pid_t pid;
+	int status;
+	char *argv[2];
+
+	pid = fork();
+
+	if (pid == -1)
+	{
+		perror("Error");
+		return;
+	}
+
+	if (pid == 0)
+	{
+		argv[0] = command;
+		argv[1] = NULL;
+
+		if (execve(command, argv, NULL) == -1)
+		{
+			perror("Error");
+			exit(EXIT_FAILURE);
+		}
+	}
+	else
+	{
+		wait(&status);
+	}
+}
+
+/**
  * main - Point d'entrée du simple shell
  *
  * Description: Crée un shell basique qui exécute des commandes simples
@@ -16,14 +77,10 @@ int main(void)
 	char *line = NULL;
 	size_t len = 0;
 	ssize_t read;
-	pid_t pid;
-	int status;
-	char *argv[2];
 
 	while (1)
 	{
-		printf("$ ");
-		fflush(stdout);
+		display_prompt();
 
 		read = getline(&line, &len, stdin);
 
@@ -33,35 +90,12 @@ int main(void)
 			break;
 		}
 
-		if (line[read - 1] == '\n')
-			line[read - 1] = '\0';
+		remove_newline(line, read);
 
 		if (strlen(line) == 0)
 			continue;
 
-		pid = fork();
-
-		if (pid == -1)
-		{
-			perror("Error");
-			continue;
-		}
-
-		if (pid == 0)
-		{
-			argv[0] = line;
-			argv[1] = NULL;
-
-			if (execve(line, argv, NULL) == -1)
-			{
-				perror("Error");
-				exit(EXIT_FAILURE);
-			}
-		}
-		else
-		{
-			wait(&status);
-		}
+		execute_command(line);
 	}
 
 	free(line);
