@@ -1,96 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/wait.h>
-
-#define MAX_ARGS 64
-
-/**
- * display_prompt - Affiche le prompt du shell
- *
- * Return: void
- */
-void display_prompt(void)
-{
-	printf("$ ");
-	fflush(stdout);
-}
-
-/**
- * remove_newline - Enlève le caractère newline d'une chaîne
- * @line: La chaîne à modifier
- * @length: La longueur de la chaîne
- *
- * Return: void
- */
-void remove_newline(char *line, ssize_t length)
-{
-	if (line[length - 1] == '\n')
-		line[length - 1] = '\0';
-}
-
-/**
- * parse_command - Découpe une commande en arguments
- * @line: La ligne de commande à découper
- * @argv: Tableau pour stocker les arguments
- *
- * Return: void
- */
-void parse_command(char *line, char **argv)
-{
-	int i = 0;
-	char *token;
-
-	token = strtok(line, " \t");
-
-	while (token != NULL && i < MAX_ARGS - 1)
-	{
-		argv[i] = token;
-		i++;
-		token = strtok(NULL, " \t");
-	}
-
-	argv[i] = NULL;
-}
-
-/**
- * execute_command - Exécute une commande avec ses arguments
- * @argv: Tableau d'arguments
- *
- * Return: void
- */
-void execute_command(char **argv)
-{
-	pid_t pid;
-	int status;
-
-	pid = fork();
-
-	if (pid == -1)
-	{
-		perror("Error");
-		return;
-	}
-
-	if (pid == 0)
-	{
-		if (execve(argv[0], argv, NULL) == -1)
-		{
-			perror("Error");
-			exit(EXIT_FAILURE);
-		}
-	}
-	else
-	{
-		wait(&status);
-	}
-}
+#include "shell.h"
 
 /**
  * main - Point d'entrée du simple shell
  *
- * Description: Shell qui exécute des commandes avec arguments
+ * Description: Shell basique sans arguments
  *
  * Return: Toujours 0 (succès)
  */
@@ -98,30 +11,56 @@ int main(void)
 {
 	char *line = NULL;
 	size_t len = 0;
-	ssize_t read;
-	char *argv[MAX_ARGS];
+	ssize_t nread;
+	pid_t pid;
+	int status;
+	char *argv[2];
+	int interactive = isatty(STDIN_FILENO);
 
 	while (1)
 	{
-		display_prompt();
-
-		read = getline(&line, &len, stdin);
-
-		if (read == -1)
+		if (interactive)
 		{
-			printf("\n");
+			write(STDOUT_FILENO, "$ ", 2);
+			fflush(stdout);
+		}
+
+		nread = getline(&line, &len, stdin);
+		if (nread == -1)
+		{
+			if (interactive)
+				write(STDOUT_FILENO, "\n", 1);
 			break;
 		}
 
-		remove_newline(line, read);
+		if (line[nread - 1] == '\n')
+			line[nread - 1] = '\0';
 
 		if (strlen(line) == 0)
 			continue;
 
-		parse_command(line, argv);
+		pid = fork();
+		if (pid == -1)
+		{
+			perror("./shell");
+			continue;
+		}
 
-		if (argv[0] != NULL)
-			execute_command(argv);
+		if (pid == 0)
+		{
+			argv[0] = line;
+			argv[1] = NULL;
+
+			if (execve(argv[0], argv, environ) == -1)
+			{
+				perror("./shell");
+				exit(127);
+			}
+		}
+		else
+		{
+			wait(&status);
+		}
 	}
 
 	free(line);
