@@ -1,105 +1,109 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-
-#define MAX_INPUT 1024
-
-extern char **environ;
+#include "shell.h"
 
 /**
- * print_prompt - Displays the shell prompt
+ * display_prompt - Affiche le prompt du shell
+ * @interactive: 1 si mode interactif, 0 sinon
+ *
+ * Return: void
  */
-void print_prompt(void)
+void display_prompt(int interactive)
 {
-    if (isatty(STDIN_FILENO))
-        write(STDOUT_FILENO, "#cisfun$ ", 9);
-}
-ssize_t read_input(char *buffer, size_t size)
-{
-    ssize_t n;
-
-    n = getline(&buffer, &size, stdin);
-    return (n);
+	if (interactive)
+	{
+		write(STDOUT_FILENO, "$ ", 2);
+		fflush(stdout);
+	}
 }
 
-char *parse_input(char *input)
+/**
+ * read_command - Lit une commande depuis l'entrée standard
+ * @line: Pointeur vers la ligne à lire
+ * @len: Pointeur vers la taille du buffer
+ *
+ * Return: Nombre de caractères lus, -1 en cas d'erreur
+ */
+ssize_t read_command(char **line, size_t *len)
 {
-    size_t len;
+	ssize_t nread;
 
-    if (input == NULL)
-        return (NULL);
+	nread = getline(line, len, stdin);
 
-    len = strlen(input);
-    if (len > 0 && input[len - 1] == '\n')
-        input[len - 1] = '\0';
+	if (nread > 0 && (*line)[nread - 1] == '\n')
+		(*line)[nread - 1] = '\0';
 
-    return (input);
+	return (nread);
 }
 
+/**
+ * execute_command - Exécute une commande
+ * @command: La commande à exécuter
+ *
+ * Return: void
+ */
 void execute_command(char *command)
 {
-    pid_t pid;
-    int status;
-    char *argv[2];
+	pid_t pid;
+	int status;
+	char *argv[2];
 
-    if (command == NULL || strlen(command) == 0)
-        return;
+	pid = fork();
 
-    argv[0] = command;
-    argv[1] = NULL;
+	if (pid == -1)
+	{
+		perror("./shell");
+		return;
+	}
 
-    pid = fork();
+	if (pid == 0)
+	{
+		argv[0] = command;
+		argv[1] = NULL;
 
-    if (pid == -1)
-    {
-        perror("Error");
-        return;
-    }
-    else if (pid == 0)
-    {
-        if (execve(command, argv, environ) == -1)
-        {
-            perror("./shell");
-            exit(EXIT_FAILURE);
-        }
-    }
-    else
-    {
-        
-        wait(&status);
-    }
+		if (execve(argv[0], argv, environ) == -1)
+		{
+			perror("./shell");
+			exit(127);
+		}
+	}
+	else
+	{
+		wait(&status);
+	}
 }
 
+/**
+ * main - Point d'entrée du simple shell
+ *
+ * Description: Shell basique sans arguments
+ *
+ * Return: Toujours 0 (succès)
+ */
 int main(void)
 {
-    char *input = NULL;
-    size_t bufsize = 0;
-    ssize_t nread;
+	char *line = NULL;
+	size_t len = 0;
+	ssize_t nread;
+	int interactive;
 
-    while (1)
-    {
-        print_prompt();
+	interactive = isatty(STDIN_FILENO);
 
-        nread = getline(&input, &bufsize, stdin);
+	while (1)
+	{
+		display_prompt(interactive);
 
-        if (nread == -1)
-        {
-            if (isatty(STDIN_FILENO))
-                write(STDOUT_FILENO, "\n", 1);
-            break;
-        }
+		nread = read_command(&line, &len);
 
-        parse_input(input);
+		if (nread == -1)
+		{
+			if (interactive)
+				write(STDOUT_FILENO, "\n", 1);
+			break;
+		}
 
-        if (strlen(input) == 0)
-            continue;
+		if (strlen(line) > 0)
+			execute_command(line);
+	}
 
-        execute_command(input);
-    }
-
-    free(input);
-    return (0);
+	free(line);
+	return (0);
 }
