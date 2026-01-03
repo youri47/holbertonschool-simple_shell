@@ -1,68 +1,105 @@
-#include "shell.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#define MAX_INPUT 1024
+
+extern char **environ;
 
 /**
- * main - Point d'entrée du simple shell
- *
- * Description: Shell basique sans arguments
- *
- * Return: Toujours 0 (succès)
+ * print_prompt - Displays the shell prompt
  */
+void print_prompt(void)
+{
+    if (isatty(STDIN_FILENO))
+        write(STDOUT_FILENO, "#cisfun$ ", 9);
+}
+ssize_t read_input(char *buffer, size_t size)
+{
+    ssize_t n;
+
+    n = getline(&buffer, &size, stdin);
+    return (n);
+}
+
+char *parse_input(char *input)
+{
+    size_t len;
+
+    if (input == NULL)
+        return (NULL);
+
+    len = strlen(input);
+    if (len > 0 && input[len - 1] == '\n')
+        input[len - 1] = '\0';
+
+    return (input);
+}
+
+void execute_command(char *command)
+{
+    pid_t pid;
+    int status;
+    char *argv[2];
+
+    if (command == NULL || strlen(command) == 0)
+        return;
+
+    argv[0] = command;
+    argv[1] = NULL;
+
+    pid = fork();
+
+    if (pid == -1)
+    {
+        perror("Error");
+        return;
+    }
+    else if (pid == 0)
+    {
+        if (execve(command, argv, environ) == -1)
+        {
+            perror("./shell");
+            exit(EXIT_FAILURE);
+        }
+    }
+    else
+    {
+        
+        wait(&status);
+    }
+}
+
 int main(void)
 {
-	char *line = NULL;
-	size_t len = 0;
-	ssize_t nread;
-	pid_t pid;
-	int status;
-	char *argv[2];
-	int interactive = isatty(STDIN_FILENO);
+    char *input = NULL;
+    size_t bufsize = 0;
+    ssize_t nread;
 
-	while (1)
-	{
-		if (interactive)
-		{
-			write(STDOUT_FILENO, "$ ", 2);
-			fflush(stdout);
-		}
+    while (1)
+    {
+        print_prompt();
 
-		nread = getline(&line, &len, stdin);
-		if (nread == -1)
-		{
-			if (interactive)
-				write(STDOUT_FILENO, "\n", 1);
-			break;
-		}
+        nread = getline(&input, &bufsize, stdin);
 
-		if (line[nread - 1] == '\n')
-			line[nread - 1] = '\0';
+        if (nread == -1)
+        {
+            if (isatty(STDIN_FILENO))
+                write(STDOUT_FILENO, "\n", 1);
+            break;
+        }
 
-		if (strlen(line) == 0)
-			continue;
+        parse_input(input);
 
-		pid = fork();
-		if (pid == -1)
-		{
-			perror("./shell");
-			continue;
-		}
+        if (strlen(input) == 0)
+            continue;
 
-		if (pid == 0)
-		{
-			argv[0] = line;
-			argv[1] = NULL;
+        execute_command(input);
+    }
 
-			if (execve(argv[0], argv, environ) == -1)
-			{
-				perror("./shell");
-				exit(127);
-			}
-		}
-		else
-		{
-			wait(&status);
-		}
-	}
-
-	free(line);
-	return (0);
+    free(input);
+    return (0);
 }
