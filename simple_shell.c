@@ -35,43 +35,6 @@ ssize_t read_command(char **line, size_t *len)
 }
 
 /**
- * execute_command - Exécute une commande
- * @command: La commande à exécuter
- *
- * Return: void
- */
-void execute_command(char *command)
-{
-	pid_t pid;
-	int status;
-	char *argv[2];
-
-	pid = fork();
-
-	if (pid == -1)
-	{
-		perror("./shell");
-		return;
-	}
-
-	if (pid == 0)
-	{
-		argv[0] = command;
-		argv[1] = NULL;
-
-		if (execve(argv[0], argv, environ) == -1)
-		{
-			perror("./shell");
-			exit(127);
-		}
-	}
-	else
-	{
-		wait(&status);
-	}
-}
-
-/**
  * main - Point d'entrée du simple shell
  *
  * Description: Shell basique sans arguments

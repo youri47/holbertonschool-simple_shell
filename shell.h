@@ -12,16 +12,17 @@
 extern char **environ;
 
 /* Fonctions principales */
-void display_prompt(void);
-char *read_line(void);
-char **parse_line(char *line);
-int execute_command(char **args);
+void display_prompt(int interactive);
+ssize_t read_command(char **line, size_t *len);
+void execute_command(char *input);
+
+/* Fonctions d'exécution */
+void run_child_process(char *command_path, char **argv);
+int parse_arguments(char *input, char **argv);
+int execute_builtin(char **argv);
 
 /* Fonctions PATH */
 char *get_path_env(void);
 char *find_command(char *command);
-
-/* Fonctions utilitaires */
-void free_args(char **args);
 
 #endif /* SHELL_H */

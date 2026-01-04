@@ -37,7 +37,7 @@ char *find_command(char *command)
 	if (strchr(command, '/') != NULL)
 	{
 		if (stat(command, &st) == 0)
-			return (strdup(command));
+			return (command);
 		return (NULL);
 	}
 
