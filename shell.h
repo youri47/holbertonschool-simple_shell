@@ -9,20 +9,19 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
+#define MAX_INPUT 1024
+
 extern char **environ;
 
-/* Fonctions principales */
-void display_prompt(int interactive);
-ssize_t read_command(char **line, size_t *len);
-void execute_command(char *input);
-
-/* Fonctions d'exécution */
-void run_child_process(char *command_path, char **argv);
+void print_prompt(void);
+ssize_t read_input(char *buffer, size_t size);
+char *parse_input(char *input);
 int parse_arguments(char *input, char **argv);
-int execute_builtin(char **argv);
-
-/* Fonctions PATH */
-char *get_path_env(void);
+void execute_command(char *input);
+void run_child_process(char *command_path, char **argv);
 char *find_command(char *command);
+char *get_path_env(void);
+int execute_builtin(char **argv);
+int builtin_exit(char **argv);
 
-#endif /* SHELL_H */
+#endif
