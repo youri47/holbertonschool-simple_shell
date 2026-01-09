@@ -17,11 +17,15 @@ void print_prompt(void);
 ssize_t read_input(char *buffer, size_t size);
 char *parse_input(char *input);
 int parse_arguments(char *input, char **argv);
-void execute_command(char *input);
-void run_child_process(char *command_path, char **argv);
+
+void execute_command(char *input, char *prog, int line_num);
+void run_child_process(char *command_path, char **argv, char *prog);
+
 char *find_command(char *command);
 char *get_path_env(void);
+
 int execute_builtin(char **argv);
 int builtin_exit(char **argv);
+int builtin_env(char **argv);
 
 #endif

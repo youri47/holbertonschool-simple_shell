@@ -1,9 +1,9 @@
 #include "shell.h"
 
 /**
- * get_path_env - Gets the PATH environment variable
+ * get_path_env - gets the PATH environment variable
  *
- * Return: Pointer to PATH string, or NULL if not found
+ * Return: pointer to PATH string, or NULL if not found
  */
 char *get_path_env(void)
 {
@@ -19,10 +19,10 @@ char *get_path_env(void)
 }
 
 /**
- * find_command - Finds the full path of a command
- * @command: The command to find
+ * find_command - finds full path of a command
+ * @command: command to find
  *
- * Return: Full path to command, or NULL if not found
+ * Return: allocated full path, command if already a path, or NULL
  */
 char *find_command(char *command)
 {
@@ -33,10 +33,11 @@ char *find_command(char *command)
 	if (command == NULL)
 		return (NULL);
 
-	/* If command contains '/', it's already a path */
 	if (strchr(command, '/') != NULL)
 	{
-		if (stat(command, &st) == 0)
+		if (stat(command, &st) == 0 &&
+				S_ISREG(st.st_mode) &&
+				access(command, X_OK) == 0)
 			return (command);
 		return (NULL);
 	}
@@ -53,7 +54,9 @@ char *find_command(char *command)
 	while (dir != NULL)
 	{
 		snprintf(full_path, sizeof(full_path), "%s/%s", dir, command);
-		if (stat(full_path, &st) == 0)
+		if (stat(full_path, &st) == 0 &&
+				S_ISREG(st.st_mode) &&
+				access(full_path, X_OK) == 0)
 		{
 			free(path_copy);
 			return (strdup(full_path));

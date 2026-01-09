@@ -7,7 +7,7 @@ void print_prompt(void)
 {
 	if (isatty(STDIN_FILENO))
 	{
-		write(STDOUT_FILENO, "#cisfun$ ", 9);
+		write(STDOUT_FILENO, "$ ", 2);
 		fflush(stdout);
 	}
 }
@@ -54,7 +54,7 @@ int parse_arguments(char *input, char **argv)
 		i++;
 		token = strtok(NULL, " \t");
 	}
-	argv[i] = NULL;
 
+	argv[i] = NULL;
 	return (i);
 }
