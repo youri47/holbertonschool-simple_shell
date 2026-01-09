@@ -1,11 +1,11 @@
 #include "shell.h"
 
 /**
- * main - Entry point for the simple shell
+ * main - simple shell main loop
  * @ac: argument count
  * @av: argument vector
  *
- * Return: Always 0
+ * Return: 0
  */
 int main(int ac, char **av)
 {
@@ -37,7 +37,7 @@ int main(int ac, char **av)
 		if (input[0] == '\0')
 			continue;
 
-		if (execute_command(input, av[0], line_num))
+		if (execute_command(input, av[0], line_num) == 1)
 			break;
 	}
 

@@ -15,12 +15,10 @@ void print_prompt(void);
 char *parse_input(char *input);
 int parse_arguments(char *input, char **argv);
 
-/* returns 1 if exit requested */
+int execute_builtin(char **argv);
 int execute_command(char *input, char *prog, int line_num);
 
-char *find_command(char *command);
 char *get_path_env(void);
-
-int execute_builtin(char **argv);
+char *find_command(char *command);
 
 #endif
