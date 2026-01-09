@@ -1,16 +1,12 @@
 #include "shell.h"
 
 /**
- * main - Entry point for the simple shell
- * @ac: argument count
- * @av: argument vector
- *
- * Return: Always 0 (Success)
+ * main - shell loop
  */
 int main(int ac, char **av)
 {
 	char *input = NULL;
-	size_t bufsize = 0;
+	size_t size = 0;
 	ssize_t nread;
 	int line_num = 0;
 
@@ -20,7 +16,7 @@ int main(int ac, char **av)
 	{
 		print_prompt();
 
-		nread = getline(&input, &bufsize, stdin);
+		nread = getline(&input, &size, stdin);
 		if (nread == -1)
 		{
 			if (isatty(STDIN_FILENO))
@@ -31,10 +27,11 @@ int main(int ac, char **av)
 		line_num++;
 		parse_input(input);
 
-		if (strlen(input) == 0)
+		if (input[0] == '\0')
 			continue;
 
-		execute_command(input, av[0], line_num);
+		if (execute_command(input, av[0], line_num))
+			break;
 	}
 
 	free(input);

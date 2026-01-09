@@ -1,87 +1,57 @@
 #include "shell.h"
 
 /**
- * free_command_path - Frees command path if allocated
- * @command_path: Path returned by find_command
- * @argv: Arguments array
+ * execute_command - parses and executes a command
+ * Return: 1 if exit requested, 0 otherwise
  */
-static void free_command_path(char *command_path, char **argv)
+int execute_command(char *input, char *prog, int line_num)
 {
-	if (command_path != NULL && command_path != argv[0])
-		free(command_path);
-}
-
-/**
- * run_child_process - Runs command in child process
- * @command_path: Full path to the command
- * @argv: Array of arguments
- * @prog: Program name (argv[0])
- */
-void run_child_process(char *command_path, char **argv, char *prog)
-{
-	if (execve(command_path, argv, environ) == -1)
-	{
-		perror(prog);
-		exit(EXIT_FAILURE);
-	}
-}
-
-/**
- * fork_and_execute - Forks and executes a command
- * @command_path: Full path to the command
- * @argv: Array of arguments
- * @prog: Program name (argv[0])
- */
-static void fork_and_execute(char *command_path, char **argv, char *prog)
-{
-	pid_t pid;
-	int status;
-
-	pid = fork();
-	if (pid == -1)
-	{
-		perror(prog);
-		return;
-	}
-
-	if (pid == 0)
-		run_child_process(command_path, argv, prog);
-
-	wait(&status);
-}
-
-/**
- * execute_command - Executes a command using execve
- * @input: The input string containing command and arguments
- * @prog: Program name (argv[0])
- * @line_num: Line counter
- */
-void execute_command(char *input, char *prog, int line_num)
-{
-	int builtin_result, argc;
 	char *argv[1024];
-	char *command_path;
-
-	if (input == NULL || input[0] == '\0')
-		return;
+	char *path;
+	pid_t pid;
+	int status, argc;
 
 	argc = parse_arguments(input, argv);
 	if (argc == 0)
-		return;
+		return (0);
 
-	builtin_result = execute_builtin(argv);
-	if (builtin_result == 1)
-		exit(0);
-	if (builtin_result == 0)
-		return;
+	/* BUILTINS FIRST */
+	if (strcmp(argv[0], "exit") == 0)
+		return (1);
 
-	command_path = find_command(argv[0]);
-	if (command_path == NULL)
+	if (strcmp(argv[0], "env") == 0)
 	{
-		fprintf(stderr, "%s: %d: %s: not found\n", prog, line_num, argv[0]);
-		return;
+		int i;
+
+		for (i = 0; environ[i]; i++)
+		{
+			write(1, environ[i], strlen(environ[i]));
+			write(1, "\n", 1);
+		}
+		return (0);
 	}
 
-	fork_and_execute(command_path, argv, prog);
-	free_command_path(command_path, argv);
+	/* PATH RESOLUTION BEFORE FORK */
+	path = find_command(argv[0]);
+	if (!path)
+	{
+		fprintf(stderr, "%s: %d: %s: not found\n",
+			prog, line_num, argv[0]);
+		return (0);
+	}
+
+	/* ONLY NOW WE FORK */
+	pid = fork();
+	if (pid == 0)
+	{
+		execve(path, argv, environ);
+		perror(prog);
+		exit(EXIT_FAILURE);
+	}
+	wait(&status);
+
+	if (path != argv[0])
+		free(path);
+
+	return (0);
 }
