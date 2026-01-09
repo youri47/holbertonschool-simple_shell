@@ -1,7 +1,11 @@
 #include "shell.h"
 
 /**
- * main - shell loop
+ * main - Entry point for the simple shell
+ * @ac: argument count
+ * @av: argument vector
+ *
+ * Return: Always 0
  */
 int main(int ac, char **av)
 {
@@ -9,17 +13,20 @@ int main(int ac, char **av)
 	size_t size = 0;
 	ssize_t nread;
 	int line_num = 0;
+	int interactive;
 
 	(void)ac;
+	interactive = isatty(STDIN_FILENO);
 
 	while (1)
 	{
-		print_prompt();
+		if (interactive)
+			print_prompt();
 
 		nread = getline(&input, &size, stdin);
 		if (nread == -1)
 		{
-			if (isatty(STDIN_FILENO))
+			if (interactive)
 				write(STDOUT_FILENO, "\n", 1);
 			break;
 		}
