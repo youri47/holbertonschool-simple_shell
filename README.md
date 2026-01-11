@@ -112,4 +112,4 @@ This project is a basic implementation of a shell that can execute commands by p
 
     - Denyss Paricard (DenZzz1)
     - Yonnhi Marcellus (youri47)
-- Nael El Ioussoufi (nael21025)
+    - Nael El Ioussoufi (nael21025)
