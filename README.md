@@ -84,6 +84,15 @@ This project is a basic implementation of a shell that can execute commands by p
     ├── simple_shell.c    # Main shell implementation
     └── README.md         # Project documentation
     ```
+## Flowchart
+
+(A) MAIN LOOP (shell.c)
+
+<img width="1540" height="2723" alt="null" src="https://github.com/user-attachments/assets/f7c0e86f-6725-4ca5-8f96-8711b1fa835f" />
+
+(B) EXECUTE COMMAND (execute.c)
+
+<img width="1220" height="2333" alt="null (1)" src="https://github.com/user-attachments/assets/3d7febae-fca4-448a-bc9a-9ceb3b041640" />
 
 ## Functions
 
